@@ -17,11 +17,7 @@ class ChatViewController: UIViewController {
     
     let db = Firestore.firestore()
     
-    var messages: [Message] = [
-        Message(sender: "1@2.com", body: "hey!"),
-        Message(sender: "3@4.com", body: "hello"),
-        Message(sender: "1@2.com", body: "How are U")
-    ]
+    var messages: [Message] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,6 +26,34 @@ class ChatViewController: UIViewController {
         navigationItem.hidesBackButton = true
         
         tableView.register(UINib(nibName: "MessageTableViewCell" , bundle: nil), forCellReuseIdentifier: Constants.cellId)
+        
+        loadMessages()
+    }
+    
+    func loadMessages() {
+        db.collection(Constants.FStore.collectionName)
+            .order(by: Constants.FStore.dateField)
+            .addSnapshotListener { querySnapshot, error in
+                self.messages = []
+                
+                if let data = querySnapshot?.documents {
+                    for doc in data {
+                      if let sender = doc[Constants.FStore.senderField] as? String,
+                         let message = doc[Constants.FStore.bodyField] as? String {
+                          let newMessage = Message(sender: sender, body: message)
+                          self.messages.append(newMessage)
+                          
+                          DispatchQueue.main.async {
+                              self.tableView.reloadData()
+                              let indexPath = IndexPath(row: self.messages.count - 1, section: 0)
+                              self.tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+                          }
+                      }
+                    }
+                } else {
+                    print("QuerySnapShotData is empty")
+                }
+            }
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
@@ -37,13 +61,17 @@ class ChatViewController: UIViewController {
            let messageSender = Auth.auth().currentUser?.email {
             db.collection(Constants.FStore.collectionName).addDocument(data: [
                 Constants.FStore.senderField:messageSender,
-                Constants.FStore.bodyField:messageBody
+                Constants.FStore.bodyField:messageBody,
+                Constants.FStore.dateField:Date().timeIntervalSince1970
             ]) { error in
                 if let e = error {
                     print("FireStore save Error, \(e)")
                 } else {
                     print("FireStore save Success")
-                    self.messageTextfield.text = ""
+                    
+                    DispatchQueue.main.async {
+                        self.messageTextfield.text = ""
+                    }
                 }
             }
         }
@@ -59,8 +87,23 @@ extension ChatViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let message = messages[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellId, for: indexPath) as! MessageTableViewCell
-        cell.messageLabel.text = messages[indexPath.row].body
+        cell.messageLabel.text = message.body
+        
+        if message.sender == Auth.auth().currentUser?.email {
+            cell.youImg.isHidden = true
+            cell.meImg.isHidden = false
+            cell.messageBubble.backgroundColor = UIColor(named: Constants.BrandColors.lightPurple)
+            cell.messageLabel.textColor = UIColor(named: Constants.BrandColors.purple)
+        }
+        else {
+            cell.youImg.isHidden = false
+            cell.meImg.isHidden = true
+            cell.messageBubble.backgroundColor = UIColor(named: Constants.BrandColors.purple)
+            cell.messageLabel.textColor = UIColor(named: Constants.BrandColors.lightPurple)
+        }
+        
         
         return cell
     }
