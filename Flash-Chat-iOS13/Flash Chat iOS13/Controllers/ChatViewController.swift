@@ -19,7 +19,7 @@ class ChatViewController: UIViewController {
     
     var messages: [Message] = []
     
-    var keyboardHeight: CGFloat?
+    var keyboardOn: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,7 +27,7 @@ class ChatViewController: UIViewController {
         tableView.dataSource = self
         navigationItem.hidesBackButton = true
         
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow), name: UIResponder.keyboardDidShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
         
         tableView.register(UINib(nibName: "MessageTableViewCell" , bundle: nil), forCellReuseIdentifier: Constants.cellId)
@@ -108,20 +108,24 @@ extension ChatViewController: UITableViewDataSource {
             cell.messageBubble.backgroundColor = UIColor(named: Constants.BrandColors.purple)
             cell.messageLabel.textColor = UIColor(named: Constants.BrandColors.lightPurple)
         }
-        
-        
         return cell
     }
-    @objc func keyboardWillShow(_ sender: Notification) {
-        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            view.frame.origin.y  -= keyboardSize.height
+    @objc func keyboardDidShow(_ sender: Notification) {
+        if !keyboardOn {
+            if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+                keyboardOn = true
+                view.frame.size.height  -= keyboardSize.height
+            }
         }
     }
-    
+
     @objc func keyboardWillHide(_ sender: Notification) {
-        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            view.frame.origin.y  += keyboardSize.height
-        }        
+        if keyboardOn {
+            if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+                keyboardOn = false
+                view.frame.size.height  += keyboardSize.height
+            }
+        }
     }
     
 }
