@@ -26,13 +26,15 @@ class ChatViewController: UIViewController {
         title = Constants.appName
         tableView.dataSource = self
         navigationItem.hidesBackButton = true
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow), name: UIResponder.keyboardDidShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+       
+        addKeyboardNotifications()
         
         tableView.register(UINib(nibName: "MessageTableViewCell" , bundle: nil), forCellReuseIdentifier: Constants.cellId)
         
         loadMessages()
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        self.removeKeyboardNotifications()
     }
     
     func loadMessages() {
@@ -110,7 +112,7 @@ extension ChatViewController: UITableViewDataSource {
         }
         return cell
     }
-    @objc func keyboardDidShow(_ sender: Notification) {
+    @objc func keyboardWillShow(_ sender: Notification) {
         if !keyboardOn {
             if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
                 keyboardOn = true
@@ -127,5 +129,18 @@ extension ChatViewController: UITableViewDataSource {
             }
         }
     }
+    func addKeyboardNotifications() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
     
+    func removeKeyboardNotifications() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        
+    }
+    
+//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//        self.view.resignFirstResponder()
+//    }
 }
