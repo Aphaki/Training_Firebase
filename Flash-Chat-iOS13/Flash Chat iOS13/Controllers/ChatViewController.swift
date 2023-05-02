@@ -19,11 +19,16 @@ class ChatViewController: UIViewController {
     
     var messages: [Message] = []
     
+    var keyboardHeight: CGFloat?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = Constants.appName
         tableView.dataSource = self
         navigationItem.hidesBackButton = true
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
         
         tableView.register(UINib(nibName: "MessageTableViewCell" , bundle: nil), forCellReuseIdentifier: Constants.cellId)
         
@@ -106,6 +111,17 @@ extension ChatViewController: UITableViewDataSource {
         
         
         return cell
+    }
+    @objc func keyboardWillShow(_ sender: Notification) {
+        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            view.frame.origin.y  -= keyboardSize.height
+        }
+    }
+    
+    @objc func keyboardWillHide(_ sender: Notification) {
+        if let keyboardSize = (sender.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            view.frame.origin.y  += keyboardSize.height
+        }        
     }
     
 }

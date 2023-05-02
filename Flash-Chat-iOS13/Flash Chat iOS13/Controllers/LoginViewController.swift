@@ -9,12 +9,18 @@
 import UIKit
 import FirebaseAuth
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, UITextFieldDelegate {
 
     @IBOutlet weak var emailTextfield: UITextField!
     @IBOutlet weak var passwordTextfield: UITextField!
     
-
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        emailTextfield.delegate = self
+        passwordTextfield.delegate = self
+    }
+    
     @IBAction func loginPressed(_ sender: UIButton) {
         if let email = emailTextfield.text,
            let password = passwordTextfield.text {
@@ -24,12 +30,17 @@ class LoginViewController: UIViewController {
                 if let e = error {
                     print(e)
                 } else {
+                    self?.view.endEditing(true)
                     strongSelf.performSegue(withIdentifier: Constants.loginToChatSeagueId, sender: self)
                 }
             }
         }
         
         
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.view.endEditing(true)
     }
     
 }
